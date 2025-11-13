@@ -1,16 +1,27 @@
-from django.http import HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+from django.contrib import messages
 from functools import wraps
+
 
 def librarian_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return login_required(view_func)(request, *args, **kwargs)
-        if not hasattr(request.user, 'is_librarian') or not request.user.is_librarian():
-            return HttpResponseForbidden("Доступ запрещен. Требуются права библиотекаря.")
+            return redirect('login')
+        
+        # Проверяем, является ли пользователь библиотекарем или администратором
+        is_librarian = hasattr(request.user, 'is_librarian') and request.user.is_librarian
+        is_admin = hasattr(request.user, 'is_admin') and request.user.is_admin
+        
+        if not (is_librarian or is_admin):
+            messages.error(request, 'Недостаточно прав доступа для выполнения этого действия.')
+            return redirect('books:book_list')
+        
         return view_func(request, *args, **kwargs)
+    
     return _wrapped_view
+
 
 def admin_required(view_func):
     @wraps(view_func)
@@ -29,7 +40,9 @@ def reader_required(view_func):
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return login_required(view_func)(request, *args, **kwargs)
-        if request.user.is_librarian() or request.user.is_admin():
+        is_librarian = hasattr(request.user, 'is_librarian') and request.user.is_librarian()
+        is_admin = hasattr(request.user, 'is_admin') and request.user.is_admin()
+        if is_librarian or is_admin:
             return HttpResponseForbidden("Доступ запрещен. Эта страница только для читателей.")
         return view_func(request, *args, **kwargs)
     return _wrapped_view

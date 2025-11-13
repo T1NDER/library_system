@@ -1,5 +1,6 @@
 from django import forms
 from books.models import Book, BorrowRecord  # Импортируем из books
+from .models import Borrowing
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
@@ -7,7 +8,7 @@ User = get_user_model()
 
 class BorrowBookForm(forms.ModelForm):
     class Meta:
-        model = BorrowRecord  # Используем BorrowRecord из books
+        model = Borrowing  # Используем Borrowing из borrowings
         fields = ['book', 'user', 'due_date']
         widgets = {
             'due_date': forms.DateInput(attrs={'type': 'date'}),
@@ -16,15 +17,15 @@ class BorrowBookForm(forms.ModelForm):
         }
         labels = {
             'book': 'Книга',
-            'user': 'Пользователь', 
+            'user': 'Пользователь',
             'due_date': 'Срок возврата',
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Ограничиваем выбор только доступными книгами
         self.fields['book'].queryset = Book.objects.filter(available_copies__gt=0)
-        
+
         # Добавляем классы для стилизации
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
@@ -33,19 +34,19 @@ class BorrowBookForm(forms.ModelForm):
         cleaned_data = super().clean()
         book = cleaned_data.get('book')
         user = cleaned_data.get('user')
-        
+
         if book and user:
-            existing_borrowing = BorrowRecord.objects.filter(
+            existing_borrowing = Borrowing.objects.filter(
                 user=user,
                 book=book,
-                returned=False
+                status__in=['active', 'overdue']
             ).exists()
-            
+
             if existing_borrowing:
                 raise forms.ValidationError(
                     'Этот читатель уже взял данную книгу и еще не вернул ее.'
                 )
-        
+
         return cleaned_data
 
 class ReturnBookForm(forms.Form):

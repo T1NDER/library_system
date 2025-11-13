@@ -34,7 +34,13 @@ class Book(models.Model):
     title = models.CharField(max_length=200, verbose_name='Название')
     author = models.ForeignKey(Author, on_delete=models.CASCADE, verbose_name='Автор')
     genre = models.ForeignKey(Genre, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Жанр')
-    isbn = models.CharField(max_length=13, unique=True, verbose_name='ISBN')
+    isbn = models.CharField(
+        max_length=13, 
+        unique=True, 
+        blank=True, 
+        null=True,  # Добавлено null=True
+        verbose_name='ISBN'
+    )
     description = models.TextField(blank=True, null=True, verbose_name='Описание')
     total_copies = models.IntegerField(default=1, verbose_name='Всего копий')
     available_copies = models.IntegerField(default=1, verbose_name='Доступные копии')
@@ -43,6 +49,12 @@ class Book(models.Model):
     publisher = models.CharField(max_length=200, blank=True, null=True, verbose_name='Издательство')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата добавления')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    
+    def save(self, *args, **kwargs):
+        # При создании новой книги available_copies = total_copies
+        if not self.pk:  # Если объект создается впервые
+            self.available_copies = self.total_copies
+        super().save(*args, **kwargs)
     
     @property
     def is_available(self):
@@ -55,6 +67,7 @@ class Book(models.Model):
         verbose_name = 'Книга'
         verbose_name_plural = 'Книги'
         ordering = ['title']
+
 
 class BorrowRecord(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')

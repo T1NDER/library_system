@@ -1,19 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView  # ✅ Правильное написание
 from django.contrib import messages
-from .forms import UserRegistrationForm, UserProfileForm, UserRoleForm  # Добавлен UserRoleForm
+from .forms import UserRegistrationForm, UserProfileForm, UserRoleForm
 from .decorators import admin_required
 from .models import User
-from django.urls import reverse_lazy
-
 
 def custom_logout(request):
-    """Кастомный выход из системы с сообщением"""
+    """Кастомный выход из системы"""
     logout(request)
     messages.success(request, 'Вы успешно вышли из системы.')
-    return redirect('/')  # ИСПРАВЛЕНО: используем путь вместо имени URL
+    return redirect('/') 
 
 class CustomLoginView(LoginView):
     """Кастомное представление для входа в систему"""

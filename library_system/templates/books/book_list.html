@@ -37,20 +37,6 @@
                     </select>
                 </div>
                 
-                <!-- Фильтр по доступности -->
-                <div class="form-group">
-                    <label for="availability">Доступность</label>
-                    <select id="availability" name="availability" class="filter-select">
-                        <option value="">Все книги</option>
-                        <option value="available" {% if request.GET.availability == 'available' %}selected{% endif %}>
-                            Только доступные
-                        </option>
-                        <option value="unavailable" {% if request.GET.availability == 'unavailable' %}selected{% endif %}>
-                            Нет в наличии
-                        </option>
-                    </select>
-                </div>
-                
                 <!-- Кнопки действий -->
                 <div class="form-group form-actions">
                     <button type="submit" class="btn btn-primary">
@@ -59,6 +45,11 @@
                     <a href="{% url 'books:book_list' %}" class="btn btn-secondary">
                         <i class="fas fa-undo"></i> Сбросить
                     </a>
+                    {% if user.is_authenticated and user.role == 'librarian' or user.role == 'admin' %}
+                        <a href="{% url 'books:add_book' %}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Добавить книгу
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </form>
@@ -68,7 +59,7 @@
     <div class="results-info">
         <p class="results-count">Найдено книг: <strong>{{ page_obj.paginator.count }}</strong></p>
         
-        {% if request.GET.query or request.GET.genre or request.GET.availability %}
+        {% if request.GET.query or request.GET.genre %}
             <div class="active-filters">
                 <strong>Активные фильтры:</strong>
                 <div class="filter-tags">
@@ -90,14 +81,6 @@
                                 </span>
                             {% endif %}
                         {% endfor %}
-                    {% endif %}
-                    
-                    {% if request.GET.availability %}
-                        <span class="filter-tag">
-                            Доступность: {% if request.GET.availability == 'available' %}Только доступные{% else %}Нет в наличии{% endif %}
-                            <a href="?{% for key, value in request.GET.items %}{% if key != 'availability' %}{{ key }}={{ value }}{% if not forloop.last %}&{% endif %}{% endif %}{% endfor %}" 
-                               class="remove-filter">×</a>
-                        </span>
                     {% endif %}
                 </div>
             </div>
@@ -143,18 +126,6 @@
                         <strong>Год издания:</strong> {{ book.publication_year }}
                     </p>
                     {% endif %}
-                    {% if book.publisher %}
-                    <p class="book-publisher">
-                        <i class="fas fa-building"></i>
-                        <strong>Издательство:</strong> {{ book.publisher }}
-                    </p>
-                    {% endif %}
-                    {% if book.isbn %}
-                    <p class="book-isbn">
-                        <i class="fas fa-barcode"></i>
-                        <strong>ISBN:</strong> {{ book.isbn }}
-                    </p>
-                    {% endif %}
                 </div>
                 
                 {% if book.description %}
@@ -169,14 +140,22 @@
                     </a>
                     {% if book.is_available %}
                         {% if user.is_authenticated %}
-                            {% if user.is_librarian or user.is_admin %}
-                                <!-- ТОЛЬКО для библиотекарей -->
+                            <!-- Для библиотекарей: выдать книгу другому -->
+                            {% if user.role == 'librarian' or user.role == 'admin' %}
                                 <a href="{% url 'borrowings:borrow_form' %}?book={{ book.id }}" class="btn btn-primary">
                                     <i class="fas fa-book"></i> Выдать книгу
                                 </a>
+                            <!-- Для читателей: взять книгу себе -->
+                            {% else %}
+                                <form method="post" action="{% url 'books:borrow_self' book.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success borrow-btn" data-title="{{ book.title }}">
+                                        <i class="fas fa-hand-holding"></i> Взять книгу
+                                    </button>
+                                </form>
                             {% endif %}
                         {% else %}
-                            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary">
+                            <a href="{% url 'users:login' %}?next={{ request.path }}" class="btn btn-primary">
                                 <i class="fas fa-sign-in-alt"></i> Войти
                             </a>
                         {% endif %}
@@ -229,4 +208,34 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const borrowButtons = document.querySelectorAll('.borrow-btn');
+
+    borrowButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            const bookTitle = this.getAttribute('data-title');
+            const confirmed = confirm('Вы уверены, что хотите взять книгу "' + bookTitle + '"?');
+
+            if (!confirmed) {
+                event.preventDefault();
+            }
+        });
+    });
+
+    // Обработка кнопки "Выдать книгу" для читателей
+    const userRole = document.body.getAttribute('data-user-role');
+    if (userRole === 'reader') {
+        const borrowLibrarianButtons = document.querySelectorAll('a[href*="borrow_form"]');
+
+        borrowLibrarianButtons.forEach(button => {
+            button.addEventListener('click', function(event) {
+                event.preventDefault();
+                alert('Недостаточно прав доступа. Только библиотекари могут выдавать книги.');
+            });
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -1,0 +1,179 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Моя
+панель{%endblock %} {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+{% endblock %} {% block content %}
+<div class="container">
+  <h1>Моя панель</h1>
+
+  <!-- Статистика читателя -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-book"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ user_borrowings_count }}</h3>
+        <p>Книг на руках</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ user_overdue_count }}</h3>
+        <p>Просроченных книг</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-book-open"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ total_books }}</h3>
+        <p>Всего книг в библиотеке</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ available_books }}</h3>
+        <p>Доступных книг</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Текущие выдачи -->
+  {% if current_borrowings %}
+  <div class="dashboard-section">
+    <h2>Мои книги</h2>
+    <div class="books-list">
+      {% for borrowing in current_borrowings %}
+      <div
+        class="book-item {% if borrowing.due_date|date:'Y-m-d' < now|date:'Y-m-d' %}overdue{% endif %}"
+      >
+        <div class="book-info">
+          <h4>
+            <a href="{% url 'books:book_detail' borrowing.book.id %}"
+              >{{ borrowing.book.title }}</a
+            >
+          </h4>
+          <p><strong>Автор:</strong> {{ borrowing.book.author.name }}</p>
+          <p>
+            <strong>Дата выдачи:</strong> {{ borrowing.borrow_date|date:"d.m.Y"
+            }}
+          </p>
+          <p>
+            <strong>Срок возврата:</strong> {{ borrowing.due_date|date:"d.m.Y"
+            }}
+          </p>
+          {% if borrowing.due_date|date:'Y-m-d' < now|date:'Y-m-d' %}
+          <p class="overdue-notice">
+            <i class="fas fa-exclamation-triangle"></i> Просрочено!
+          </p>
+          {% endif %}
+        </div>
+        <div class="book-actions">
+          <a href="{% url 'borrowings:my_books' %}" class="btn btn-outline"
+            >Все мои книги</a
+          >
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Рекомендуемые книги -->
+  {% if recommended_books %}
+  <div class="dashboard-section">
+    <h2>Рекомендуемые книги</h2>
+    <div class="books-grid">
+      {% for book in recommended_books %}
+      <div class="book-card">
+        <h3>
+          <a href="{% url 'books:book_detail' book.id %}">{{ book.title }}</a>
+        </h3>
+        <p><strong>Автор:</strong> {{ book.author.name }}</p>
+        <p><strong>Жанр:</strong> {{ book.genre.name }}</p>
+        <p><strong>Доступно:</strong> {{ book.available_copies }}</p>
+        {% if book.available_copies > 0 %}
+        <span class="status available">Доступна</span>
+        {% else %}
+        <span class="status unavailable">Нет в наличии</span>
+        {% endif %}
+        <div class="book-actions">
+          <a
+            href="{% url 'books:book_detail' book.id %}"
+            class="btn btn-outline"
+            >Подробнее</a
+          >
+          {% if book.available_copies > 0 %}
+          <form
+            method="post"
+            action="{% url 'books:borrow_self' book.id %}"
+            style="display: inline"
+          >
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="btn btn-success borrow-btn"
+              data-title="{{ book.title }}"
+            >
+              <i class="fas fa-hand-holding"></i> Взять книгу
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="text-align: center; margin: 30px 0">
+      <a href="{% url 'books:book_list' %}" class="btn btn-primary"
+        >Весь каталог</a
+      >
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Быстрые действия -->
+  <div class="dashboard-section">
+    <h2>Быстрые действия</h2>
+    <div class="quick-actions">
+      <a href="{% url 'books:book_list' %}" class="btn btn-primary">
+        <i class="fas fa-search"></i> Найти книгу
+      </a>
+      <a href="{% url 'borrowings:my_books' %}" class="btn btn-secondary">
+        <i class="fas fa-book"></i> Мои книги
+      </a>
+      <a href="{% url 'users:profile' %}" class="btn btn-outline">
+        <i class="fas fa-user"></i> Мой профиль
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const borrowButtons = document.querySelectorAll(".borrow-btn");
+
+    borrowButtons.forEach((button) => {
+      button.addEventListener("click", function (event) {
+        const bookTitle = this.getAttribute("data-title");
+        const confirmed = confirm(
+          'Вы уверены, что хотите взять книгу "' + bookTitle + '"?'
+        );
+
+        if (!confirmed) {
+          event.preventDefault();
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

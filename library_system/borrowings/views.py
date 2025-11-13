@@ -3,12 +3,19 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from books.models import Book, BorrowRecord
+from .models import Borrowing
 from .forms import BorrowBookForm
 from users.decorators import librarian_required
+from datetime import timedelta
 
 @librarian_required
 def borrow_form(request):
     """Форма для выдачи книги читателю (ТОЛЬКО для библиотекарей)"""
+    # Двойная проверка прав
+    if not (hasattr(request.user, 'is_librarian') and request.user.is_librarian) and not (hasattr(request.user, 'is_admin') and request.user.is_admin):
+        messages.error(request, 'Недостаточно прав доступа! Только библиотекари могут выдавать книги.')
+        return redirect('books:book_list')
+    
     initial = {}
     book_id = request.GET.get('book')
     if book_id:
@@ -38,17 +45,17 @@ def borrow_form(request):
 
 @login_required
 def my_books(request):
-    """Страница с книгами пользователя (только просмотр)"""
-    current_borrows = BorrowRecord.objects.filter(
-        user=request.user, 
-        returned=False
+    """Страница с книгами пользователя"""
+    current_borrows = Borrowing.objects.filter(
+        user=request.user,
+        status__in=['active', 'overdue']
     ).select_related('book', 'book__author', 'book__genre')
-    
-    borrow_history = BorrowRecord.objects.filter(
-        user=request.user, 
-        returned=True
-    ).select_related('book', 'book__author', 'book__genre').order_by('-return_date')[:20]
-    
+
+    borrow_history = Borrowing.objects.filter(
+        user=request.user,
+        status='returned'
+    ).select_related('book', 'book__author', 'book__genre').order_by('-returned_date')[:20]
+
     context = {
         'current_borrows': current_borrows,
         'borrow_history': borrow_history,
@@ -58,10 +65,10 @@ def my_books(request):
 @librarian_required
 def active_borrowings(request):
     """Активные заимствования (ТОЛЬКО для библиотекарей)"""
-    active_borrowings = BorrowRecord.objects.filter(
-        returned=False
-    ).select_related('book', 'book__author', 'user').order_by('-borrow_date')
-    
+    active_borrowings = Borrowing.objects.filter(
+        status__in=['active', 'overdue']
+    ).select_related('book', 'book__author', 'user').order_by('-borrowed_date')
+
     context = {
         'active_borrowings': active_borrowings,
     }
@@ -69,33 +76,35 @@ def active_borrowings(request):
 
 @login_required
 def return_book(request, borrowing_id):
-    """Вернуть книгу (доступно и читателям для своих книг)"""
-    borrowing = get_object_or_404(BorrowRecord, id=borrowing_id)
-    
-    # Проверяем права: библиотекарь ИЛИ владелец книги
-    is_librarian = hasattr(request.user, 'is_librarian') and request.user.is_librarian()
-    if not is_librarian and borrowing.user != request.user:
+    """Вернуть книгу (доступно читателям для своих книг)"""
+    borrowing = get_object_or_404(Borrowing, id=borrowing_id)
+
+    # Проверяем, что книга не возвращена
+    if borrowing.status == 'returned':
+        messages.warning(request, 'Эта книга уже была возвращена.')
+        return redirect('borrowings:my_books')
+
+    # Проверяем права: пользователь должен быть владельцем записи ИЛИ библиотекарем
+    is_owner = borrowing.user == request.user
+    is_librarian = hasattr(request.user, 'is_librarian') and request.user.is_librarian
+    is_admin = hasattr(request.user, 'is_admin') and request.user.is_admin
+
+    if not is_owner and not is_librarian and not is_admin:
         messages.error(request, 'У вас нет прав для возврата этой книги.')
         return redirect('borrowings:my_books')
-    
-    if borrowing.returned:
-        messages.warning(request, 'Эта книга уже была возвращена.')
-        return redirect('borrowings:active_borrowings' if is_librarian else 'borrowings:my_books')
-    
-    if request.method == 'POST':
-        borrowing.returned = True
-        borrowing.return_date = timezone.now()
-        borrowing.save()
-        
-        book = borrowing.book
-        book.available_copies += 1
-        book.save()
-        
-        messages.success(request, f'Книга "{book.title}" успешно возвращена!')
-        
-        if is_librarian:
-            return redirect('borrowings:active_borrowings')
-        else:
-            return redirect('borrowings:my_books')
-    
-    return render(request, 'borrowings/return_book.html', {'borrowing': borrowing})
+
+    # Возвращаем книгу
+    borrowing.status = 'returned'
+    borrowing.returned_date = timezone.now()
+    borrowing.save()
+
+    book = borrowing.book
+    book.available_copies += 1
+    book.save()
+
+    messages.success(request, f'Книга "{book.title}" успешно возвращена!')
+
+    if is_librarian or is_admin:
+        return redirect('borrowings:active_borrowings')
+    else:
+        return redirect('borrowings:my_books')

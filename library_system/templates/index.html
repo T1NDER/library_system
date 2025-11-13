@@ -1,65 +1,62 @@
-{% extends 'base.html' %}
-
-{% block title %}Главная страница{% endblock %}
-
-{% block content %}
+{% extends 'base.html' %} {% block title %}Главная страница{% endblock %}
+{%block content %}
 <div class="hero">
-    <h2>Добро пожаловать в библиотеку!</h2>
-    <p>Наша библиотека предлагает широкий выбор книг для всех возрастов</p>
-    
-    {% if user.is_authenticated %}
-        <div class="user-actions">
-            <a href="{% url 'books:book_list' %}" class="btn btn-primary">📖 Каталог книг</a>
-            <a href="{% url 'users:profile' %}" class="btn btn-secondary">👤 Мой профиль</a>
-            {% if user.is_admin %}
-                <a href="{% url 'books:add_book' %}" class="btn btn-primary">➕ Добавить книгу</a>
-            {% endif %}
-        </div>
-    {% else %}
-        <div class="guest-actions">
-            <a href="{% url 'users:login' %}" class="btn btn-primary">Войти в систему</a>
-            <a href="{% url 'users:register' %}" class="btn btn-secondary">Зарегистрироваться</a>
-        </div>
+  <h2>Добро пожаловать в библиотеку!</h2>
+  <p>Наша библиотека предлагает широкий выбор книг для всех возрастов</p>
+
+  {% if user.is_authenticated %}
+  <div class="user-actions">
+    <a href="/books/" class="btn btn-primary">📖 Каталог книг</a>
+    <a href="/users/profile/" class="btn btn-secondary">👤 Мой профиль</a>
+    {% if user.role == 'librarian' or user.role == 'admin' %}
+    <a href="/books/add/" class="btn btn-primary">➕ Добавить книгу</a>
     {% endif %}
+  </div>
+  {% else %}
+  <div class="guest-actions">
+    <a href="/users/login/" class="btn btn-primary">Войти в систему</a>
+    <a href="/users/register/" class="btn btn-secondary">Зарегистрироваться</a>
+  </div>
+  {% endif %}
 </div>
 
 <!-- Рекомендуемые книги -->
 {% if featured_books %}
 <div class="container">
-    <h2 style="text-align: center; margin: 40px 0 20px 0;">Рекомендуемые книги</h2>
-    <div class="books-grid">
-        {% for book in featured_books %}
-            <div class="book-card">
-                <h3><a href="{% url 'books:book_detail' book.id %}">{{ book.title }}</a></h3>
-                <p><strong>Автор:</strong> {{ book.author.name }}</p>
-                <p><strong>Жанр:</strong> {{ book.genre.name }}</p>
-                <p><strong>Доступно:</strong> {{ book.available_copies }} из {{ book.total_copies }}</p>
-                {% if book.available_copies > 0 %}
-                    <span class="status available">Доступна</span>
-                {% else %}
-                    <span class="status unavailable">Нет в наличии</span>
-                {% endif %}
-            </div>
-        {% endfor %}
+  <h2 style="text-align: center; margin: 40px 0 20px 0">Рекомендуемые книги</h2>
+  <div class="books-grid">
+    {% for book in featured_books %}
+    <div class="book-card">
+      <h3><a href="/books/{{ book.id }}/">{{ book.title }}</a></h3>
+      <p><strong>Автор:</strong> {{ book.author.name }}</p>
+      <p><strong>Жанр:</strong> {{ book.genre.name }}</p>
+      <p><strong>Доступно:</strong> {{ book.available_copies }}</p>
+      {% if book.available_copies > 0 %}
+      <span class="status available">Доступна</span>
+      {% else %}
+      <span class="status unavailable">Нет в наличии</span>
+      {% endif %}
     </div>
-    <div style="text-align: center; margin: 30px 0;">
-        <a href="{% url 'books:book_list' %}" class="btn btn-primary">Весь каталог</a>
-    </div>
+    {% endfor %}
+  </div>
+  <div style="text-align: center; margin: 30px 0">
+    <a href="/books/" class="btn btn-primary">Весь каталог</a>
+  </div>
 </div>
 {% endif %}
 
 <div class="features">
-    <div class="feature">
-        <h3>📚 Большой выбор</h3>
-        <p>Тысячи книг различных жанров</p>
-    </div>
-    <div class="feature">
-        <h3>⏱️ Удобный поиск</h3>
-        <p>Быстрый поиск по автору, названию и жанру</p>
-    </div>
-    <div class="feature">
-        <h3>📅 Онлайн-бронирование</h3>
-        <p>Бронируйте книги онлайн</p>
-    </div>
+  <div class="feature">
+    <h3>📚 Большой выбор</h3>
+    <p>Тысячи книг различных жанров</p>
+  </div>
+  <div class="feature">
+    <h3>⏱️ Удобный поиск</h3>
+    <p>Быстрый поиск по автору, названию и жанру</p>
+  </div>
+  <div class="feature">
+    <h3>📅 Онлайн-бронирование</h3>
+    <p>Бронируйте книги онлайн</p>
+  </div>
 </div>
 {% endblock %}

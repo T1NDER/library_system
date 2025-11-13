@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Выдать книгу{% endblock %}
 
@@ -39,7 +38,7 @@
         Выдать книгу
       </button>
 
-      <a href="{% url 'borrowings:active_borrowings' %}" class="btn btn-secondary" style="width: 100%">
+      <a href="/borrowings/active/" class="btn btn-secondary" style="width: 100%">
         Отмена
       </a>
     </form>
