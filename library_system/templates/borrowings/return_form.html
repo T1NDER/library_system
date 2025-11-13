@@ -1,0 +1,57 @@
+{% extends 'base.html' %} {% block title %}Возврат книги{% endblock %} 
+
+{% block content %}
+<div class="container">
+  <div class="auth-form">
+    <h2>Возврат книги</h2>
+
+    <div class="book-info">
+      <h3>{{ borrowing.book.title }}</h3>
+      <p><strong>Автор:</strong> {{ borrowing.book.author.name }}</p>
+      <p>
+        <strong>Читатель:</strong> {{
+        borrowing.user.get_full_name|default:borrowing.user.username }}
+      </p>
+      <p>
+        <strong>Дата выдачи:</strong> {{ borrowing.borrowed_date|date:"d.m.Y" }}
+      </p>
+      <p>
+        <strong>Срок возврата:</strong> {{ borrowing.due_date|date:"d.m.Y" }}
+      </p>
+      {% if borrowing.is_overdue %}
+      <p class="overdue">Просрочено на {{ borrowing.days_overdue }} дней</p>
+      {% endif %}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="id_condition">Состояние книги:</label>
+        {{ form.condition }}
+      </div>
+
+      <div class="form-group">
+        <label for="id_notes">Примечания:</label>
+        {{ form.notes }}
+      </div>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        style="width: 100%; margin: 20px 0 10px 0"
+      >
+        Подтвердить возврат
+      </button>
+
+      <a
+        href="{% url 'active_borrowings' %}"
+        class="btn btn-secondary"
+        style="width: 100%"
+      >
+        Отмена
+      </a>
+    </form>
+  </div>
+</div>
+{% endblock %}

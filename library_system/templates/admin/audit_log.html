@@ -1,0 +1,148 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_reports.css' %}">
+{% endblock %}
+
+{% block title %}Журнал аудита | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block content %}
+<div class="audit-container">
+    <div class="audit-header">
+        <h1>Журнал аудита действий пользователей</h1>
+    </div>
+
+    <div class="audit-filters">
+        <form method="get" class="date-filter-form">
+            <div class="date-fields">
+                <div class="filter-group">
+                    <label for="action">Тип действия</label>
+                    <select id="action" name="action" class="date-input">
+                        <option value="">Все действия</option>
+                        {% for action, label in action_choices %}
+                            <option value="{{ action }}" {% if request.GET.action == action %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="date_from">С даты</label>
+                    <input type="date" id="date_from" name="date_from" class="date-input" value="{{ request.GET.date_from }}">
+                </div>
+
+                <div class="filter-group">
+                    <label for="date_to">По дату</label>
+                    <input type="date" id="date_to" name="date_to" class="date-input" value="{{ request.GET.date_to }}">
+                </div>
+
+                <div class="filter-group">
+                    <button type="submit" class="admin-button">Применить фильтры</button>
+                    <a href="?" class="admin-button" style="background: #666; margin-top: 5px;">Сбросить</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if page_obj %}
+    <div class="stats-section">
+        <h2>Статистика</h2>
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-number">{{ page_obj.paginator.count }}</div>
+                <div class="stat-label">Всего записей</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ create_count }}</div>
+                <div class="stat-label">Созданий</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ update_count }}</div>
+                <div class="stat-label">Изменений</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ delete_count }}</div>
+                <div class="stat-label">Удалений</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-section">
+        <h2>Записи аудита</h2>
+        <table class="activity-table">
+            <thead>
+                <tr>
+                    <th>Дата и время</th>
+                    <th>Пользователь</th>
+                    <th>Действие</th>
+                    <th>Модель</th>
+                    <th>Объект</th>
+                    <th>IP-адрес</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in page_obj %}
+                <tr>
+                    <td>{{ log.timestamp|date:"d.m.Y H:i:s" }}</td>
+                    <td>
+                        <span class="user-badge">
+                            {% if log.user %}
+                                {{ log.user.username }}
+                            {% else %}
+                                Система
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge 
+                            {% if log.action_type == 'create' %}status-returned
+                            {% elif log.action_type == 'update' %}status-active
+                            {% elif log.action_type == 'delete' %}status-overdue
+                            {% endif %}">
+                            {% if log.action_type == 'create' %}Создание
+                            {% elif log.action_type == 'update' %}Изменение
+                            {% elif log.action_type == 'delete' %}Удаление
+                            {% else %}{{ log.action_type }}{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ log.content_type.model|title }}</td>
+                    <td>
+                        {% if log.object_repr %}
+                            {{ log.object_repr }}
+                        {% else %}
+                            <span style="color: #999;">-</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ log.ip_address|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="pagination" style="text-align: center; margin: 20px 0;">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="admin-button" style="display: inline-block; margin: 0 5px;">← Назад</a>
+        {% endif %}
+        
+        <span style="margin: 0 15px; line-height: 35px;">
+            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+        </span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="admin-button" style="display: inline-block; margin: 0 5px;">Вперед →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <p>Записи аудита не найдены</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

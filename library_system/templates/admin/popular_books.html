@@ -1,0 +1,103 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_reports.css' %}">
+{% endblock %}
+
+{% block title %}Популярные книги | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">📚 Популярные книги</a></h1>
+{% endblock %}
+
+{% block content_title %}<h1>Самые популярные книги</h1>{% endblock %}
+
+{% block content %}
+<div class="admin-report">
+    <div class="report-section">
+        <h2>Топ-20 популярных книг</h2>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Книга</th>
+                    <th>Автор</th>
+                    <th>Жанр</th>
+                    <th>Количество выдач</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in popular_books %}
+                <tr>
+                    <td class="rank">{{ forloop.counter }}</td>
+                    <td><strong>{{ book.title }}</strong></td>
+                    <td>{{ book.author.name }}</td>
+                    <td>{{ book.genre.name }}</td>
+                    <td><span class="count-badge">{{ book.borrow_count }}</span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="no-data">Нет данных о выдачах</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="stats-grid">
+        <div class="report-section">
+            <h2>📈 Популярность по жанрам</h2>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Жанр</th>
+                        <th>Выдачи</th>
+                        <th>Книг</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in genre_stats %}
+                    <tr>
+                        <td>{{ stat.genre__name }}</td>
+                        <td><span class="count-badge">{{ stat.total_borrowings }}</span></td>
+                        <td>{{ stat.total_books }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="no-data">Нет данных по жанрам</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="report-section">
+            <h2>👤 Популярные авторы</h2>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Автор</th>
+                        <th>Выдачи</th>
+                        <th>Книг</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in author_stats %}
+                    <tr>
+                        <td>{{ stat.author__name }}</td>
+                        <td><span class="count-badge">{{ stat.total_borrowings }}</span></td>
+                        <td>{{ stat.total_books }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="no-data">Нет данных по авторам</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

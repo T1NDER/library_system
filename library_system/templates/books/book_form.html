@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-form">
+        <h2>{{ title }}</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_title">Название книги:</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="error">{{ form.title.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_author">Автор:</label>
+                {{ form.author }}
+                {% if form.author.errors %}
+                    <div class="error">{{ form.author.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_genre">Жанр:</label>
+                {{ form.genre }}
+                {% if form.genre.errors %}
+                    <div class="error">{{ form.genre.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_isbn">ISBN:</label>
+                {{ form.isbn }}
+                {% if form.isbn.errors %}
+                    <div class="error">{{ form.isbn.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_publication_year">Год издания:</label>
+                {{ form.publication_year }}
+                {% if form.publication_year.errors %}
+                    <div class="error">{{ form.publication_year.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_publisher">Издательство:</label>
+                {{ form.publisher }}
+                {% if form.publisher.errors %}
+                    <div class="error">{{ form.publisher.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_description">Описание:</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="error">{{ form.description.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="id_total_copies">Всего экземпляров:</label>
+                {{ form.total_copies }}
+                {% if form.total_copies.errors %}
+                    <div class="error">{{ form.total_copies.errors }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin: 20px 0 10px 0">
+                Сохранить
+            </button>
+            
+            <a href="{% url 'book_list' %}" class="btn btn-secondary" style="width: 100%;">
+                Отмена
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

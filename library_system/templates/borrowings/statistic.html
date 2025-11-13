@@ -1,0 +1,21 @@
+{% extends 'base.html' %} {% block title %}Статистика выдач{% endblock %} {%
+block content %}
+<div class="container">
+  <h1>Статистика выдач</h1>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number">{{ total_borrowings }}</div>
+      <div class="stat-label">Всего выдач</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ active_borrowings }}</div>
+      <div class="stat-label">Активные выдачи</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">{{ overdue_borrowings }}</div>
+      <div class="stat-label">Просроченные</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Панель управления{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Панель управления</h1>
+    
+    <div class="user-role">
+        Добро пожаловать, <strong>{{ user.username }}</strong>! 
+        Ваша роль: <strong>{{ user.get_role_display }}</strong>
+    </div>
+    
+    {% if user.role == 'librarian' %}
+        <!-- Дашборд для библиотекаря -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ active_borrowings_count|default:"0" }}</div>
+                <div class="stat-label">Активные выдачи</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ overdue_borrowings_count|default:"0" }}</div>
+                <div class="stat-label">Просроченные</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_books|default:"0" }}</div>
+                <div class="stat-label">Всего книг</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ available_books|default:"0" }}</div>
+                <div class="stat-label">Доступно книг</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h3>Быстрые действия</h3>
+                <div class="dashboard-actions">
+                    <a href="{% url 'borrowings:active_borrowings' %}" class="btn btn-primary">
+                        <i class="fas fa-book"></i> Управление выдачами
+                    </a>
+                    <a href="{% url 'books:book_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-search"></i> Каталог книг
+                    </a>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3>Последние выдачи</h3>
+                <div class="borrowings-list">
+                    {% if recent_borrowings %}
+                        {% for borrow in recent_borrowings %}
+                            <div class="borrowing-item {% if borrow.is_overdue %}overdue{% endif %}">
+                                <strong>{{ borrow.book.title }}</strong><br>
+                                Читатель: {{ borrow.user.username }}<br>
+                                До: {{ borrow.due_date|date:"d.m.Y" }}
+                                {% if borrow.is_overdue %}
+                                    <span class="overdue-text">(Просрочено)</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>Нет активных выдач</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    {% elif user.role == 'admin' %}
+        <!-- Дашборд для администратора -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_users|default:"0" }}</div>
+                <div class="stat-label">Пользователи</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_books|default:"0" }}</div>
+                <div class="stat-label">Всего книг</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ active_borrowings_count|default:"0" }}</div>
+                <div class="stat-label">Активные выдачи</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ librarians_count|default:"0" }}</div>
+                <div class="stat-label">Библиотекари</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h3>Управление системой</h3>
+                <div class="dashboard-actions">
+                    <a href="{% url 'user_management' %}" class="btn btn-primary">
+                        <i class="fas fa-users"></i> Управление пользователями
+                    </a>
+                    <a href="{% url 'books:add_book' %}" class="btn btn-secondary">
+                        <i class="fas fa-plus"></i> Добавить книгу
+                    </a>
+                    <a href="{% url 'books:book_list' %}" class="btn btn-primary">
+                        <i class="fas fa-book"></i> Каталог книг
+                    </a>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3>Статистика</h3>
+                <div class="borrowings-list">
+                    <p><strong>Всего читателей:</strong> {{ readers_count|default:"0" }}</p>
+                    <p><strong>Книг доступно:</strong> {{ available_books|default:"0" }}</p>
+                    <p><strong>Книг выдано:</strong> {{ borrowed_books_count|default:"0" }}</p>
+                    <p><strong>Просрочено:</strong> {{ overdue_borrowings_count|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Дашборд для читателя -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ user_borrowings_count|default:"0" }}</div>
+                <div class="stat-label">Мои книги</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ user_overdue_count|default:"0" }}</div>
+                <div class="stat-label">Просрочено</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_books|default:"0" }}</div>
+                <div class="stat-label">Всего книг</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ available_books|default:"0" }}</div>
+                <div class="stat-label">Доступно</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h3>Мои действия</h3>
+                <div class="dashboard-actions">
+                    <a href="{% url 'borrowings:my_books' %}" class="btn btn-primary">
+                        <i class="fas fa-bookmark"></i> Мои книги
+                    </a>
+                    <a href="{% url 'books:book_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-search"></i> Найти книгу
+                    </a>
+                </div>
+
+                {% if recommended_books %}
+                <h4 style="margin-top: 20px;">Рекомендуемые книги</h4>
+                <div class="books-grid">
+                    {% for book in recommended_books %}
+                    <div class="book-card-small">
+                        <h4><a href="{% url 'books:book_detail' book.id %}">{{ book.title }}</a></h4>
+                        <p><small>Автор: {{ book.author.name }}</small></p>
+                        <p><small>Доступно: {{ book.available_copies }} из {{ book.total_copies }}</small></p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="dashboard-card">
+                <h3>Текущие выдачи</h3>
+                <div class="borrowings-list">
+                    {% if user_current_borrowings %}
+                        {% for borrow in user_current_borrowings %}
+                            <div class="borrowing-item {% if borrow.is_overdue %}overdue{% endif %}">
+                                <strong>{{ borrow.book.title }}</strong><br>
+                                Автор: {{ borrow.book.author.name }}<br>
+                                Вернуть до: {{ borrow.due_date|date:"d.m.Y" }}
+                                {% if borrow.is_overdue %}
+                                    <span class="overdue-text">(Просрочено!)</span>
+                                {% else %}
+                                    <br>Осталось дней: {{ borrow.days_remaining }}
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>У вас нет взятых книг</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Общие быстрые ссылки -->
+    <div class="dashboard-card">
+        <h3>Быстрые ссылки</h3>
+        <div class="dashboard-actions">
+            <a href="{% url 'books:book_list' %}" class="btn btn-outline">
+                <i class="fas fa-book-open"></i> Каталог книг
+            </a>
+            <a href="{% url 'borrowings:my_books' %}" class="btn btn-outline">
+                <i class="fas fa-bookmark"></i> Мои книги
+            </a>
+            {% if user.role == 'librarian' or user.role == 'admin' %}
+                <a href="{% url 'borrowings:active_borrowings' %}" class="btn btn-outline">
+                    <i class="fas fa-list"></i> Все выдачи
+                </a>
+            {% endif %}
+            {% if user.role == 'admin' %}
+                <a href="{% url 'user_management' %}" class="btn btn-outline">
+                    <i class="fas fa-users"></i> Пользователи
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

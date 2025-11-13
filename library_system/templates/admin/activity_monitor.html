@@ -1,0 +1,74 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_custom.css' %}">
+{% endblock %}
+
+{% block title %}Мониторинг активности | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">⚡ Активность библиотеки</a></h1>
+{% endblock %}
+
+{% block content_title %}<h1>Мониторинг активности системы</h1>{% endblock %}
+
+{% block content %}
+<div class="module">
+    <p class="current-date">Последние 50 операций с книгами</p>
+
+    {% if recent_activities %}
+    <div class="results">
+        <table class="activity-table">
+            <thead>
+                <tr>
+                    <th>📅 Дата выдачи</th>
+                    <th>👤 Читатель</th>
+                    <th>📚 Книга</th>
+                    <th>📊 Статус</th>
+                    <th>⏱️ Дней до возврата</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in recent_activities %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td>{{ activity.borrowed_date|date:"d.m.Y H:i" }}</td>
+                    <td><strong>{{ activity.user.get_full_name|default:activity.user.username }}</strong></td>
+                    <td>{{ activity.book.title }}</td>
+                    <td>
+                        {% if activity.status == 'borrowed' %}
+                            {% if activity.is_overdue %}
+                                <span class="status-badge status-overdue">ПРОСРОЧЕНО</span>
+                            {% else %}
+                                <span class="status-badge status-active">АКТИВНО</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="status-badge status-returned">ВОЗВРАЩЕНО</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if activity.status == 'borrowed' and activity.days_until_due is not None %}
+                            {% if activity.days_until_due > 7 %}
+                                <span class="days-badge days-positive">{{ activity.days_until_due }} дн.</span>
+                            {% elif activity.days_until_due > 0 %}
+                                <span class="days-badge days-warning">{{ activity.days_until_due }} дн.</span>
+                            {% else %}
+                                <span class="days-badge days-negative">{{ activity.overdue_days }} дн.</span>
+                            {% endif %}
+                        {% else %}
+                            <span>-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>📝 Нет данных об активности</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

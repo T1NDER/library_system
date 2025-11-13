@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/catalog.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="book-detail">
+        <div class="book-header">
+            <h1>{{ book.title }}</h1>
+            {% if book.is_available %}
+                <span class="status available">
+                    <i class="fas fa-check-circle"></i> Доступна
+                </span>
+            {% else %}
+                <span class="status unavailable">
+                    <i class="fas fa-times-circle"></i> Нет в наличии
+                </span>
+            {% endif %}
+        </div>
+        
+        <div class="book-info">
+            <p><strong>Автор:</strong> {{ book.author.name }}</p>
+            <p><strong>Жанр:</strong> {{ book.genre.name }}</p>
+            <p><strong>Доступно экземпляров:</strong> {{ book.available_copies }} из {{ book.total_copies }}</p>
+            {% if book.publication_year %}
+            <p><strong>Год издания:</strong> {{ book.publication_year }}</p>
+            {% endif %}
+            {% if book.publisher %}
+            <p><strong>Издательство:</strong> {{ book.publisher }}</p>
+            {% endif %}
+            {% if book.isbn %}
+            <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+            {% endif %}
+        </div>
+        
+        {% if book.description %}
+        <div class="book-description">
+            <h3>Описание</h3>
+            <p>{{ book.description }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="book-actions">
+            <a href="{% url 'books:book_list' %}" class="btn btn-secondary">← Назад к каталогу</a>
+            
+            {% if book.is_available %}
+                {% if user.is_authenticated %}
+                    {% if user.is_librarian or user.is_admin %}
+                        <!-- ТОЛЬКО для библиотекарей и администраторов -->
+                        <a href="{% url 'borrowings:borrow_form' %}?book={{ book.id }}" class="btn btn-primary">
+                            <i class="fas fa-book"></i> Выдать книгу
+                        </a>
+                    {% else %}
+                        <!-- Для обычных читателей - НИЧЕГО не показываем -->
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Войти
+                    </a>
+                {% endif %}
+            {% else %}
+                <span class="btn btn-disabled" style="cursor: not-allowed; opacity: 0.7;">
+                    <i class="fas fa-clock"></i> Недоступно
+                </span>
+            {% endif %}
+            
+            {% if user.is_admin %}
+                <a href="{% url 'books:edit_book' book.id %}" class="btn btn-primary">Редактировать</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

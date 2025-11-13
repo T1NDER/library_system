@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Мои книги{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/borrowings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Мои книги</h1>
+
+    <!-- Текущие выдачи -->
+    <div class="borrowings-container">
+        <h2 class="section-title">Текущие выдачи</h2>
+        
+        {% if current_borrowings %}
+            <div class="borrowings-list">
+                {% for borrowing in current_borrowings %}
+                <div class="borrowing-card {% if borrowing.is_overdue %}overdue{% endif %}">
+                    <div class="borrowing-header">
+                        <h3 class="borrowing-title">
+                            <a href="{% url 'book_detail' borrowing.book.id %}">
+                                {{ borrowing.book.title }}
+                            </a>
+                        </h3>
+                        <span class="status {% if borrowing.status == 'active' %}available{% else %}unavailable{% endif %}">
+                            {{ borrowing.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="borrowing-meta">
+                        <p>
+                            <i class="fas fa-user-pen"></i>
+                            <strong>Автор:</strong> {{ borrowing.book.author.name }}
+                        </p>
+                        <p>
+                            <i class="fas fa-tag"></i>
+                            <strong>Жанр:</strong> {{ borrowing.book.genre.name }}
+                        </p>
+                        <p>
+                            <i class="fas fa-calendar-plus"></i>
+                            <strong>Дата выдачи:</strong> {{ borrowing.borrowed_date|date:"d.m.Y" }}
+                        </p>
+                        <p class="{% if borrowing.is_overdue %}overdue-text{% endif %}">
+                            <i class="fas fa-calendar-check"></i>
+                            <strong>Срок возврата:</strong> {{ borrowing.due_date|date:"d.m.Y" }}
+                        </p>
+                    </div>
+                    
+                    {% if borrowing.is_overdue %}
+                    <div class="overdue-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Просрочено на {{ borrowing.days_overdue }} дней!</strong>
+                        Пожалуйста, верните книгу как можно скорее.
+                    </div>
+                    {% endif %}
+                    
+                    <div class="borrowing-actions">
+                        <a href="{% url 'borrowings:return_book' borrowing.id %}" class="return-btn">
+                            <i class="fas fa-undo"></i> Вернуть книгу
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-book-open"></i>
+                <h3>Нет текущих выдач</h3>
+                <p>У вас пока нет взятых книг. Посетите каталог, чтобы найти интересные книги.</p>
+                <a href="{% url 'books:book_list' %}" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Перейти в каталог
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- История выдач -->
+    <div class="borrowings-container">
+        <h2 class="section-title">История выдач</h2>
+        
+        {% if history_borrowings %}
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Книга</th>
+                        <th>Автор</th>
+                        <th>Дата выдачи</th>
+                        <th>Срок возврата</th>
+                        <th>Дата возврата</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for borrowing in history_borrowings %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'book_detail' borrowing.book.id %}" class="book-link">
+                                {{ borrowing.book.title }}
+                            </a>
+                        </td>
+                        <td>{{ borrowing.book.author.name }}</td>
+                        <td>{{ borrowing.borrowed_date|date:"d.m.Y" }}</td>
+                        <td>{{ borrowing.due_date|date:"d.m.Y" }}</td>
+                        <td>
+                            {% if borrowing.returned_date %}
+                                {{ borrowing.returned_date|date:"d.m.Y" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status {% if borrowing.status == 'returned' %}returned{% else %}unavailable{% endif %}">
+                                {{ borrowing.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-history"></i>
+                <h3>История выдач пуста</h3>
+                <p>Здесь будет отображаться история всех ваших предыдущих выдач книг.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

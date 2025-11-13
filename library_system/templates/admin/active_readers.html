@@ -1,0 +1,109 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_reports.css' %}">
+{% endblock %}
+
+{% block title %}Активные читатели | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">👥 Активные читатели</a></h1>
+{% endblock %}
+
+{% block content_title %}<h1>Активные читатели</h1>{% endblock %}
+
+{% block content %}
+<div class="admin-report">
+    <div class="report-section">
+        <h2>Топ-20 активных читателей</h2>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Читатель</th>
+                    <th>Всего выдач</th>
+                    <th>Активные займы</th>
+                    <th>Роль</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reader in active_readers %}
+                <tr>
+                    <td class="rank">{{ forloop.counter }}</td>
+                    <td><strong>{{ reader.get_full_name|default:reader.username }}</strong></td>
+                    <td><span class="count-badge">{{ reader.borrow_count }}</span></td>
+                    <td>
+                        {% if reader.active_borrowings > 0 %}
+                            <span class="active-badge">{{ reader.active_borrowings }}</span>
+                        {% else %}
+                            <span class="inactive-badge">0</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="role-badge">{{ reader.get_role_display }}</span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="no-data">Нет активных читателей</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="stats-grid">
+        <div class="report-section">
+            <h2>📊 Статистика по ролям</h2>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Роль</th>
+                        <th>Активных</th>
+                        <th>Всего</th>
+                        <th>Выдач</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in role_stats %}
+                    <tr>
+                        <td>{{ stat.role }}</td>
+                        <td><span class="count-badge">{{ stat.active_readers }}</span></td>
+                        <td>{{ stat.total_users }}</td>
+                        <td>{{ stat.total_borrowings }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="no-data">Нет данных по ролям</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="report-section">
+            <h2>⚠️ Читатели с просрочками</h2>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Читатель</th>
+                        <th>Просрочек</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reader in readers_with_overdue %}
+                    <tr>
+                        <td><strong>{{ reader.get_full_name|default:reader.username }}</strong></td>
+                        <td><span class="overdue-badge">{{ reader.overdue_count }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="no-data">Нет читателей с просрочками</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

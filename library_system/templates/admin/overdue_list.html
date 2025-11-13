@@ -1,0 +1,54 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_custom.css' %}">
+{% endblock %}
+
+{% block title %}Список задолжников | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">📋 Задолжники библиотеки</a></h1>
+{% endblock %}
+
+{% block content_title %}<h1>Список задолжников</h1>{% endblock %}
+
+{% block content %}
+<div class="module">
+    <p class="current-date"><strong>На {{ today|date:"d.m.Y" }}</strong></p>
+
+    {% if overdue_borrowings %}
+    <div class="results">
+        <table class="overdue-table">
+            <thead>
+                <tr>
+                    <th>👤 Читатель</th>
+                    <th>📚 Книга</th>
+                    <th>📅 Дата выдачи</th>
+                    <th>⏰ Срок возврата</th>
+                    <th>⚠️ Просрочка</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for borrowing in overdue_borrowings %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td><strong>{{ borrowing.user.get_full_name|default:borrowing.user.username }}</strong></td>
+                    <td>{{ borrowing.book.title }}</td>
+                    <td>{{ borrowing.borrowed_date|date:"d.m.Y" }}</td>
+                    <td>{{ borrowing.due_date|date:"d.m.Y" }}</td>
+                    <td>
+                        <span class="overdue-badge">{{ borrowing.overdue_days }} дней</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>🎉 На данный момент нет задолжников!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

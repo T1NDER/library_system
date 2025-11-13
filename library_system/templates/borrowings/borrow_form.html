@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Выдать книгу{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="auth-form">
+    <h2>Выдать книгу читателю</h2>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="id_book">Книга:</label>
+        {{ form.book }}
+        {% if form.book.errors %}
+        <div class="error">{{ form.book.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="id_user">Читатель:</label>
+        {{ form.user }}
+        {% if form.user.errors %}
+        <div class="error">{{ form.user.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label for="id_due_date">Срок возврата:</label>
+        {{ form.due_date }}
+        {% if form.due_date.errors %}
+        <div class="error">{{ form.due_date.errors }}</div>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin: 20px 0 10px 0">
+        Выдать книгу
+      </button>
+
+      <a href="{% url 'borrowings:active_borrowings' %}" class="btn btn-secondary" style="width: 100%">
+        Отмена
+      </a>
+    </form>
+  </div>
+</div>
+{% endblock %}

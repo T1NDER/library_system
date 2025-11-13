@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Мои книги{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/borrowings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">📖 Мои книги</h1>
+
+    <!-- Текущие заимствования -->
+    <div class="section">
+        <h2 class="section-title">📋 Текущие заимствования</h2>
+
+        {% if current_borrows %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Книга</th>
+                            <th>Автор</th>
+                            <th>Дата выдачи</th>
+                            <th>Срок возврата</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for borrowing in current_borrows %}
+                        <tr>
+                            <td>
+                                <div class="book-title">{{ borrowing.book.title }}</div>
+                                <div class="book-author">ISBN: {{ borrowing.book.isbn|default:"-" }}</div>
+                            </td>
+                            <td>
+                                <div class="book-author">{{ borrowing.book.author.name }}</div>
+                            </td>
+                            <td class="date-cell">{{ borrowing.borrow_date|date:"d.m.Y" }}</td>
+                            <td class="date-cell">{{ borrowing.due_date|date:"d.m.Y" }}</td>
+                            <td>
+                                {% if borrowing.is_overdue %}
+                                    <span class="status-badge status-overdue">
+                                        ⚠️ Просрочено на {{ borrowing.days_overdue }} дн.
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-active">
+                                        ✅ Активно (осталось {{ borrowing.days_until_due }} дн.)
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'borrowings:return_book' borrowing.id %}" class="btn-action btn-return">
+                                    <i class="fas fa-undo-alt"></i> Вернуть
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <h3>Нет текущих заимствований</h3>
+                <p>У вас нет взятых книг в данный момент</p>
+                <a href="{% url 'books:book_list' %}" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Найти книги в каталоге
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- История заимствований -->
+    <div class="section">
+        <h2 class="section-title">📊 История заимствований</h2>
+
+        {% if borrow_history %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Книга</th>
+                            <th>Автор</th>
+                            <th>Дата выдачи</th>
+                            <th>Дата возврата</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for borrowing in borrow_history %}
+                        <tr>
+                            <td>
+                                <div class="book-title">{{ borrowing.book.title }}</div>
+                                <div class="book-author">ISBN: {{ borrowing.book.isbn|default:"-" }}</div>
+                            </td>
+                            <td>
+                                <div class="book-author">{{ borrowing.book.author.name }}</div>
+                            </td>
+                            <td class="date-cell">{{ borrowing.borrow_date|date:"d.m.Y" }}</td>
+                            <td class="date-cell">{{ borrowing.return_date|date:"d.m.Y" }}</td>
+                            <td>
+                                <span class="status-badge status-returned">
+                                    📚 Возвращена
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <h3>История пуста</h3>
+                <p>Здесь будет отображаться история ваших заимствований</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

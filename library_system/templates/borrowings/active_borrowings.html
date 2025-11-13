@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Активные выдачи книг{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/borrowings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">📚 Активные выдачи книг</h1>
+
+    <!-- Кнопки действий ТОЛЬКО для библиотекарей -->
+    {% if user.is_librarian or user.is_admin %}
+    <div class="actions">
+        <a href="{% url 'borrowings:borrow_form' %}" class="btn btn-primary">
+            <i class="fas fa-book"></i> Выдать книгу
+        </a>
+        <a href="{% url 'books:book_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> К каталогу книг
+        </a>
+    </div>
+    {% endif %}
+
+    {% if active_borrowings %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Книга</th>
+                        <th>Автор</th>
+                        <th>Читатель</th>
+                        <th>Дата выдачи</th>
+                        <th>Срок возврата</th>
+                        <th>Статус</th>
+                        {% if user.is_librarian or user.is_admin %}
+                        <th>Действия</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for borrowing in active_borrowings %}
+                    <tr>
+                        <td>
+                            <div class="book-title">{{ borrowing.book.title }}</div>
+                            <div class="book-author">ISBN: {{ borrowing.book.isbn|default:"-" }}</div>
+                        </td>
+                        <td>
+                            <div class="book-author">{{ borrowing.book.author.name }}</div>
+                        </td>
+                        <td>
+                            <div class="reader-name">{{ borrowing.user.get_full_name|default:borrowing.user.username }}</div>
+                            <div class="book-author">Логин: {{ borrowing.user.username }}</div>
+                        </td>
+                        <td class="date-cell">{{ borrowing.borrow_date|date:"d.m.Y" }}</td>
+                        <td class="date-cell">{{ borrowing.due_date|date:"d.m.Y" }}</td>
+                        <td>
+                            {% if borrowing.is_overdue %}
+                                <span class="status-badge status-overdue">
+                                    ⚠️ Просрочено на {{ borrowing.days_overdue }} дн.
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-active">
+                                    ✅ Активно (осталось {{ borrowing.days_until_due }} дн.)
+                                </span>
+                            {% endif %}
+                        </td>
+                        {% if user.is_librarian or user.is_admin %}
+                        <td>
+                            <a href="{% url 'borrowings:return_book' borrowing.id %}" class="btn-action btn-return">
+                                <i class="fas fa-undo-alt"></i> Вернуть
+                            </a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <h3>Нет активных выдач</h3>
+            <p>Все книги находятся в библиотеке</p>
+            {% if user.is_librarian or user.is_admin %}
+            <a href="{% url 'borrowings:borrow_form' %}" class="btn btn-primary">
+                <i class="fas fa-book"></i> Выдать первую книгу
+            </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

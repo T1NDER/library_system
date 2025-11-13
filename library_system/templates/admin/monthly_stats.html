@@ -1,0 +1,65 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_reports.css' %}">
+{% endblock %}
+
+{% block title %}Статистика по месяцам | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">📊 Статистика библиотеки</a></h1>
+{% endblock %}
+
+{% block content_title %}<h1>Статистика выдачи по месяцам</h1>{% endblock %}
+
+{% block content %}
+<div class="admin-report">
+    <div class="report-period">
+        <p>Период: <strong>{{ start_date }} - {{ end_date }}</strong></p>
+    </div>
+
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_borrowings }}</div>
+            <div class="stat-label">Всего выдач за год</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ avg_per_month }}</div>
+            <div class="stat-label">Среднее в месяц</div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h2>Выдачи книг по месяцам</h2>
+        <table class="chart-table">
+            <thead>
+                <tr>
+                    <th>Месяц/Год</th>
+                    <th>Количество выдач</th>
+                    <th>График</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in monthly_data %}
+                <tr>
+                    <td><strong>{{ item.period }}</strong></td>
+                    <td>{{ item.count }} выдач</td>
+                    <td>
+                        <div class="chart-visual">
+                            <span class="chart-number">{{ item.count }}</span>
+                            <div class="chart-bar-container">
+                                <div class="chart-bar">
+                                    {{ item.count }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

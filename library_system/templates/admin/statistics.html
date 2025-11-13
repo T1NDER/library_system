@@ -1,0 +1,85 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_custom.css' %}">
+{% endblock %}
+
+{% block title %}Статистика за период | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">📊 Статистика библиотеки</a></h1>
+{% endblock %}
+
+{% block content_title %}<h1>Статистика за период</h1>{% endblock %}
+
+{% block content %}
+<div class="module">
+    <div class="form-row">
+        <form method="get" class="date-filter-form">
+            <div class="date-fields">
+                <label><strong>С:</strong> <input type="date" name="start_date" value="{{ start_date }}" class="date-input"></label>
+                <label><strong>По:</strong> <input type="date" name="end_date" value="{{ end_date }}" class="date-input"></label>
+                <button type="submit" class="admin-button">Применить фильтр</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-container">
+        <div class="stats-section">
+            <h2>📚 Статистика книг за период</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">{{ books_stats.total }}</div>
+                    <div class="stat-label">Всего книг добавлено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ books_stats.available }}</div>
+                    <div class="stat-label">Доступно книг</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ books_stats.borrowed }}</div>
+                    <div class="stat-label">Выдано книг</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>🔄 Статистика выдач за период</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">{{ borrowing_stats.total_borrowings }}</div>
+                    <div class="stat-label">Всего выдач</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ borrowing_stats.returned }}</div>
+                    <div class="stat-label">Возвращено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ borrowing_stats.active }}</div>
+                    <div class="stat-label">Активных выдач</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>📈 Общая статистика (все время)</h2>
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="stat-number">{{ total_stats.total_books }}</div>
+                    <div class="stat-label">Всего книг в системе</div>
+                </div>
+                <div class="stat-card total">
+                    <div class="stat-number">{{ total_stats.total_users }}</div>
+                    <div class="stat-label">Всего пользователей</div>
+                </div>
+                <div class="stat-card total">
+                    <div class="stat-number">{{ total_stats.total_borrowings }}</div>
+                    <div class="stat-label">Всего выдач</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

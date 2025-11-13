@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Возврат книги{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/borrowings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Возврат книги</h1>
+
+    <div class="table-container" style="max-width: 600px; margin: 0 auto;">
+        <div style="padding: 20px;">
+            <h3 style="color: #2c3e50; margin-bottom: 20px; text-align: center;">
+                Вы уверены, что хотите вернуть книгу?
+            </h3>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <strong>Автор:</strong>
+                        <div>{{ borrowing.book.author.name }}</div>
+                    </div>
+                    <div>
+                        <strong>Читатель:</strong>
+                        <div>{{ borrowing.user.get_full_name|default:borrowing.user.username }}</div>
+                    </div>
+                    <div>
+                        <strong>Книга:</strong>
+                        <div>{{ borrowing.book.title }}</div>
+                    </div>
+                    <div>
+                        <strong>Дата выдачи:</strong>
+                        <div class="date-cell">{{ borrowing.borrow_date|date:"d.m.Y" }}</div>
+                    </div>
+                    <div>
+                        <strong>Срок возврата:</strong>
+                        <div class="date-cell">{{ borrowing.due_date|date:"d.m.Y" }}</div>
+                    </div>
+                    <div>
+                        <strong>Статус:</strong>
+                        <div>
+                            {% if borrowing.is_overdue %}
+                                <span class="status-badge status-overdue" style="min-width: auto;">
+                                    Просрочено
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-active" style="min-width: auto;">
+                                    Активно
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 20px;">
+                {% if borrowing.is_overdue %}
+                    <div class="status-badge status-overdue" style="display: inline-block;">
+                        Просрочено на {{ borrowing.days_overdue }} дней
+                    </div>
+                {% else %}
+                    <div class="status-badge status-active" style="display: inline-block;">
+                        Осталось {{ borrowing.days_until_due }} дней
+                    </div>
+                {% endif %}
+            </div>
+
+            <form method="post" style="text-align: center;">
+                {% csrf_token %}
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button type="submit" class="btn btn-primary" style="background-color: #27ae60;">
+                        <i class="fas fa-check"></i> Подтвердить возврат
+                    </button>
+                    <a href="{% if request.user.is_staff %}{% url 'borrowings:active_borrowings' %}{% else %}{% url 'borrowings:my_books' %}{% endif %}" 
+                       class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
