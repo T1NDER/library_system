@@ -33,7 +33,6 @@ def book_list(request):
         if available_only:
             books = books.filter(available_copies__gt=0)
     
-    # Пагинация
     paginator = Paginator(books, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -51,7 +50,6 @@ def book_detail(request, pk):
     """Детальная информация о книге"""
     book = get_object_or_404(Book, pk=pk)
 
-    # Проверяем, есть ли у пользователя эта книга на руках
     from .models import BorrowRecord
     user_has_book = BorrowRecord.objects.filter(
         user=request.user,
@@ -70,7 +68,6 @@ def book_detail(request, pk):
 @librarian_required
 def add_book(request):
     """Добавление новой книги (ТОЛЬКО для библиотекарей)"""
-    # Дополнительная проверка на случай обхода декоратора
     if not (hasattr(request.user, 'is_librarian') and request.user.is_librarian) and not (hasattr(request.user, 'is_admin') and request.user.is_admin):
         messages.error(request, 'Недостаточно прав доступа! Только библиотекари могут добавлять книги.')
         return redirect('books:book_list')
@@ -104,33 +101,80 @@ def edit_book(request, book_id):
 
 
 @login_required
-def borrow_self(request, book_id):
-    """Читатель берет книгу себе"""
+def request_book(request, book_id):
+    """Пользователь подает заявку на книгу"""
     book = get_object_or_404(Book, id=book_id)
-    
-    # Проверяем, что пользователь не библиотекарь (для самовыдачи)
-    if request.user.is_librarian():
-        messages.error(request, 'Библиотекари не могут брать книги через самовыдачу.')
-        return redirect('books:book_list')
-    
-    # Проверяем, что книга доступна
-    if not book.is_available:
-        messages.error(request, 'Эта книга сейчас недоступна.')
-        return redirect('books:book_list')
-    
-    # Проверяем, нет ли у пользователя уже этой книги
-    from .models import BorrowRecord
+
+    if request.user.is_librarian or request.user.is_admin:
+        messages.error(request, 'Библиотекари и администраторы не могут подавать заявки на книги.')
+        return redirect('books:book_detail', pk=book.id)
+
+    # Проверяем, есть ли уже активная заявка или взятая книга
+    existing_request = BookRequest.objects.filter(
+        user=request.user,
+        book=book,
+        status__in=['pending', 'approved']
+    ).exists()
+
     existing_borrow = BorrowRecord.objects.filter(
         user=request.user,
         book=book,
         returned=False
     ).exists()
-    
+
+    if existing_request:
+        messages.warning(request, f'У вас уже есть активная заявка на книгу "{book.title}".')
+        return redirect('books:book_detail', pk=book.id)
+
+    if existing_borrow:
+        messages.warning(request, f'У вас уже есть книга "{book.title}".')
+        return redirect('books:book_detail', pk=book.id)
+
+    # Создаем заявку
+    book_request = BookRequest.objects.create(
+        user=request.user,
+        book=book,
+        status='pending'
+    )
+
+    messages.success(request, f'Заявка на книгу "{book.title}" успешно подана! Ожидайте одобрения библиотекаря.')
+    return redirect('books:book_detail', pk=book.id)
+
+
+@login_required
+def borrow_self(request, book_id):
+    """Читатель берет книгу себе (только если заявка одобрена)"""
+    book = get_object_or_404(Book, id=book_id)
+
+    if request.user.is_librarian or request.user.is_admin:
+        messages.info(request, 'Библиотекари и администраторы могут подать заявку на книгу.')
+        return redirect('books:book_detail', pk=book.id)
+
+    if not book.is_available:
+        messages.error(request, 'Эта книга сейчас недоступна.')
+        return redirect('books:book_list')
+
+    # Проверяем одобренную заявку
+    approved_request = BookRequest.objects.filter(
+        user=request.user,
+        book=book,
+        status='approved'
+    ).first()
+
+    if not approved_request:
+        messages.error(request, 'У вас нет одобренной заявки на эту книгу.')
+        return redirect('books:book_detail', pk=book.id)
+
+    existing_borrow = BorrowRecord.objects.filter(
+        user=request.user,
+        book=book,
+        returned=False
+    ).exists()
+
     if existing_borrow:
         messages.warning(request, f'У вас уже есть книга "{book.title}".')
         return redirect('books:book_list')
-    
-    # Создаем запись о выдаче
+
     from django.utils import timezone
     from datetime import timedelta
 
@@ -142,11 +186,14 @@ def borrow_self(request, book_id):
         returned=False
     )
     borrow_record.save()
-    
-    # Уменьшаем количество доступных копий
+
     book.available_copies -= 1
     book.save()
-    
+
+    # Помечаем заявку как выполненную (можно добавить новый статус, но пока оставим approved)
+    approved_request.notes = f"Книга выдана {timezone.now().strftime('%d.%m.%Y %H:%M')}"
+    approved_request.save()
+
     messages.success(request, f'Книга "{book.title}" успешно взята! Верните до {borrow_record.due_date.strftime("%d.%m.%Y")}.')
     return redirect('core:reader_dashboard')
 

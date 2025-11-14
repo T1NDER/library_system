@@ -10,7 +10,6 @@ def librarian_required(view_func):
         if not request.user.is_authenticated:
             return redirect('login')
         
-        # Проверяем, является ли пользователь библиотекарем или администратором
         is_librarian = hasattr(request.user, 'is_librarian') and request.user.is_librarian
         is_admin = hasattr(request.user, 'is_admin') and request.user.is_admin
         

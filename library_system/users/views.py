@@ -4,8 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView  # ✅ Правильное написание
 from django.contrib import messages
 from .forms import UserRegistrationForm, UserProfileForm, UserRoleForm
-from .decorators import admin_required
+from .decorators import admin_required, librarian_required
 from .models import User
+from books.models import Book, BookRequest
+from borrowings.models import Borrowing
+from django.utils import timezone
 
 def custom_logout(request):
     """Кастомный выход из системы"""
@@ -15,7 +18,7 @@ def custom_logout(request):
 
 class CustomLoginView(LoginView):
     """Кастомное представление для входа в систему"""
-    template_name = 'registration/login.html'  # Указываем правильный путь к шаблону
+    template_name = 'registration/login.html'  
     redirect_authenticated_user = True
 
 def register(request):
@@ -25,7 +28,7 @@ def register(request):
             user = form.save()
             login(request, user)
             messages.success(request, 'Регистрация прошла успешно!')
-            return redirect('/')  # ИСПРАВЛЕНО: используем путь вместо имени URL
+            return redirect('/') 
     else:
         form = UserRegistrationForm()
     
@@ -38,7 +41,7 @@ def profile(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Профиль успешно обновлен!')
-            return redirect('users:profile')  # ИСПРАВЛЕНО: используем пространство имен
+            return redirect('users:profile') 
     else:
         form = UserProfileForm(instance=request.user)
     
@@ -61,8 +64,10 @@ def change_user_role(request, user_id):
         if form.is_valid():
             form.save()
             messages.success(request, f'Роль пользователя {user.username} изменена на {user.get_role_display()}')
-            return redirect('users:user_management')  # ИСПРАВЛЕНО: используем пространство имен
+            return redirect('users:user_management') 
     else:
         form = UserRoleForm(instance=user)
     
     return render(request, 'users/change_role.html', {'form': form, 'user': user})
+
+

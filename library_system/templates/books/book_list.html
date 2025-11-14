@@ -11,19 +11,15 @@
 {% block content %}
 <div class="container">
     <h1>Каталог книг</h1>
-    
-    <!-- Расширенная панель поиска и фильтров -->
     <div class="search-form">
         <form method="get" class="filter-form">
             <div class="form-inline">
-                <!-- Поле поиска -->
                 <div class="form-group">
                     <label for="search">Поиск по книгам</label>
                     <input type="text" id="search" name="query" placeholder="Название, автор, жанр..." 
                            value="{{ request.GET.query }}" class="search-input">
                 </div>
                 
-                <!-- Фильтр по жанру -->
                 <div class="form-group">
                     <label for="genre">Жанр</label>
                     <select id="genre" name="genre" class="filter-select">
@@ -36,8 +32,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                
-                <!-- Кнопки действий -->
+            
                 <div class="form-group form-actions">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> Найти
@@ -55,7 +50,6 @@
         </form>
     </div>
 
-    <!-- Информация о результатах -->
     <div class="results-info">
         <p class="results-count">Найдено книг: <strong>{{ page_obj.paginator.count }}</strong></p>
         
@@ -87,7 +81,6 @@
         {% endif %}
     </div>
 
-    <!-- Список книг -->
     <div class="books-grid">
         {% for book in page_obj %}
             <div class="book-card">
@@ -109,10 +102,14 @@
                         <i class="fas fa-user-pen"></i>
                         <strong>Автор:</strong> {{ book.author.name }}
                     </p>
+                    
+                    {% if book.genre %}
                     <p class="book-genre">
                         <i class="fas fa-tag"></i>
                         <strong>Жанр:</strong> {{ book.genre.name }}
                     </p>
+                    {% endif %}
+                    
                     <p class="book-copies">
                         <i class="fas fa-copy"></i>
                         <strong>Доступно:</strong> 
@@ -120,6 +117,7 @@
                             {{ book.available_copies }} из {{ book.total_copies }}
                         </span>
                     </p>
+                    
                     {% if book.publication_year %}
                     <p class="book-year">
                         <i class="fas fa-calendar"></i>
@@ -140,19 +138,12 @@
                     </a>
                     {% if book.is_available %}
                         {% if user.is_authenticated %}
-                            <!-- Для библиотекарей: выдать книгу другому -->
                             {% if user.role == 'librarian' or user.role == 'admin' %}
                                 <a href="{% url 'borrowings:borrow_form' %}?book={{ book.id }}" class="btn btn-primary">
                                     <i class="fas fa-book"></i> Выдать книгу
                                 </a>
-                            <!-- Для читателей: взять книгу себе -->
                             {% else %}
-                                <form method="post" action="{% url 'books:borrow_self' book.id %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-success borrow-btn" data-title="{{ book.title }}">
-                                        <i class="fas fa-hand-holding"></i> Взять книгу
-                                    </button>
-                                </form>
+                                <!-- Кнопка взять книгу убрана для читателя -->
                             {% endif %}
                         {% else %}
                             <a href="{% url 'users:login' %}?next={{ request.path }}" class="btn btn-primary">
@@ -180,7 +171,6 @@
         {% endfor %}
     </div>
 
-    <!-- Пагинация -->
     {% if page_obj.has_other_pages %}
         <div class="pagination">
             {% if page_obj.has_previous %}
@@ -224,7 +214,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Обработка кнопки "Выдать книгу" для читателей
     const userRole = document.body.getAttribute('data-user-role');
     if (userRole === 'reader') {
         const borrowLibrarianButtons = document.querySelectorAll('a[href*="borrow_form"]');

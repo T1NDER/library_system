@@ -38,7 +38,7 @@ class Book(models.Model):
         max_length=13, 
         unique=True, 
         blank=True, 
-        null=True,  # Добавлено null=True
+        null=True,  
         verbose_name='ISBN'
     )
     description = models.TextField(blank=True, null=True, verbose_name='Описание')
@@ -51,8 +51,7 @@ class Book(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
     
     def save(self, *args, **kwargs):
-        # При создании новой книги available_copies = total_copies
-        if not self.pk:  # Если объект создается впервые
+        if not self.pk:  
             self.available_copies = self.total_copies
         super().save(*args, **kwargs)
     
@@ -69,6 +68,31 @@ class Book(models.Model):
         ordering = ['title']
 
 
+class BookRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Ожидает рассмотрения'),
+        ('approved', 'Одобрена'),
+        ('rejected', 'Отклонена'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, verbose_name='Книга')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='Статус')
+    requested_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата заявки')
+    approved_date = models.DateTimeField(null=True, blank=True, verbose_name='Дата одобрения')
+    rejected_date = models.DateTimeField(null=True, blank=True, verbose_name='Дата отклонения')
+    notes = models.TextField(blank=True, null=True, verbose_name='Примечания')
+
+    def __str__(self):
+        return f"Заявка: {self.book.title} - {self.user.username} ({self.get_status_display()})"
+
+    class Meta:
+        verbose_name = 'Заявка на книгу'
+        verbose_name_plural = 'Заявки на книги'
+        ordering = ['-requested_date']
+        unique_together = ['user', 'book', 'status']  # Предотвращает дублирование активных заявок
+
+
 class BorrowRecord(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
     book = models.ForeignKey(Book, on_delete=models.CASCADE, verbose_name='Книга')
@@ -76,35 +100,35 @@ class BorrowRecord(models.Model):
     due_date = models.DateTimeField(verbose_name='Срок возврата')
     returned = models.BooleanField(default=False, verbose_name='Возвращена')
     return_date = models.DateTimeField(null=True, blank=True, verbose_name='Дата возврата')
-    
+
     def save(self, *args, **kwargs):
-        if not self.pk:  # Если это новая запись
+        if not self.pk:
             if not self.due_date:
                 self.due_date = timezone.now() + timedelta(days=14)
         super().save(*args, **kwargs)
-    
+
     @property
     def is_overdue(self):
         """Проверка, просрочена ли книга"""
         return not self.returned and timezone.now() > self.due_date
-    
+
     @property
     def days_overdue(self):
         """Количество дней просрочки"""
         if self.is_overdue:
             return (timezone.now() - self.due_date).days
         return 0
-    
+
     @property
     def days_until_due(self):
         """Количество дней до срока возврата"""
         if not self.returned and not self.is_overdue:
             return (self.due_date - timezone.now()).days
         return 0
-    
+
     def __str__(self):
         return f"{self.book.title} - {self.user.username}"
-    
+
     class Meta:
         verbose_name = 'Запись о выдаче'
         verbose_name_plural = 'Записи о выдачах'

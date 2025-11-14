@@ -1,6 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap");
 
-/* Базовые стили */
 * {
   margin: 0;
   padding: 0;
@@ -26,12 +25,7 @@ body {
   min-height: 100vh;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1,h2,h3,h4,h5,h6 {
   font-family: "Playfair Display", serif;
   font-weight: 600;
 }
@@ -42,7 +36,6 @@ h6 {
   padding: 0 20px;
 }
 
-/* Шапка - ФИКС: убираем ограничение ширины и прижимаем к краям */
 .header {
   background: linear-gradient(
     135deg,
@@ -77,8 +70,8 @@ h6 {
   align-items: center;
   position: relative;
   z-index: 2;
-  max-width: none; /* ФИКС: убираем ограничение максимальной ширины */
-  padding: 0 40px; /* ФИКС: увеличиваем отступы от краев */
+  max-width: none; 
+  padding: 0 40px; 
 }
 
 .logo {
@@ -86,23 +79,20 @@ h6 {
   font-weight: 700;
   font-family: "Playfair Display", serif;
   letter-spacing: -0.5px;
-  flex-shrink: 0; /* ФИКС: предотвращаем сжатие логотипа */
+  flex-shrink: 0; 
 }
 
-/* НАВИГАЦИЯ - ФИКС: убираем лишние отступы */
 .nav {
   display: flex;
   align-items: center;
-  flex-shrink: 0; /* ФИКС: предотвращаем сжатие навигации */
+  flex-shrink: 0; 
 }
 
-/* Контейнер для гостевых кнопок */
 .guest-nav {
   display: flex;
   gap: 1rem;
 }
 
-/* Контейнер для пользовательских кнопок */
 .user-nav {
   display: flex;
   align-items: center;
@@ -432,15 +422,10 @@ h6 {
   }
 }
 
-.hero,
-.feature,
-.auth-form {
+.hero, .feature, .auth-form {
   animation: fadeIn 0.8s ease-out;
 }
 
-
-
-/* Дополнительные стили для библиотеки */
 .books-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -535,7 +520,6 @@ h6 {
     border-color: var(--primary-medium);
 }
 
-/* Таблицы */
 .data-table {
     width: 100%;
     border-collapse: collapse;

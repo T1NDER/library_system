@@ -19,17 +19,19 @@
     <div class="user-nav">
       <span>Привет, {{ user.username }}!</span>
       
-      <!-- Панель управления -->
+      
       {% if user.role == 'reader' %}
         <a href="{% url 'core:reader_dashboard' %}" class="nav-btn">Моя панель</a>
-      {% elif user.role == 'librarian' or user.role == 'admin' %}
+      {% elif user.role == 'librarian' %}
+        <a href="{% url 'core:dashboard' %}" class="nav-btn">Панель библиотекаря</a>
+      {% elif user.role == 'admin' %}
         <a href="{% url 'core:dashboard' %}" class="nav-btn">Панель управления</a>
       {% endif %}
       
       <a href="/books/" class="nav-btn">Каталог книг</a>
       <a href="/borrowings/my-books/" class="nav-btn">Мои книги</a>
       
-      <!-- Доступ к функциям библиотекаря и администратора -->
+      
       {% if user.role == 'librarian' or user.role == 'admin' %}
         <a href="/borrowings/active/" class="nav-btn">Активные выдачи</a>
         <a href="/borrowings/borrow-form/" class="nav-btn">Выдать книгу</a>
@@ -38,7 +40,7 @@
       
       <a href="/users/profile/" class="nav-btn">Профиль</a>
       
-      <!-- Кнопка выхода -->
+      
       <form action="/users/logout/" method="post" style="display: inline;">
         {% csrf_token %}
         <button type="submit" class="nav-btn" style="background: none; border: none; color: inherit; cursor: pointer; font: inherit; padding: 10px 24px;">

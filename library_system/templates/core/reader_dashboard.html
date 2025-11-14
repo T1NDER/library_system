@@ -1,11 +1,10 @@
-{% extends 'base.html' %} {% load static %} {% block title %}Моя
-панель{%endblock %} {% block extra_css %}
+{% extends 'base.html' %} {% load static %} {% block title %}
+Моя панель{%endblock %} {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
 {% endblock %} {% block content %}
 <div class="container">
   <h1>Моя панель</h1>
 
-  <!-- Статистика читателя -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-icon">
@@ -48,7 +47,7 @@
     </div>
   </div>
 
-  <!-- Текущие выдачи -->
+  
   {% if current_borrowings %}
   <div class="dashboard-section">
     <h2>Мои книги</h2>
@@ -65,12 +64,10 @@
           </h4>
           <p><strong>Автор:</strong> {{ borrowing.book.author.name }}</p>
           <p>
-            <strong>Дата выдачи:</strong> {{ borrowing.borrow_date|date:"d.m.Y"
-            }}
+            <strong>Дата выдачи:</strong> {{ borrowing.borrow_date|date:"d.m.Y"}}
           </p>
           <p>
-            <strong>Срок возврата:</strong> {{ borrowing.due_date|date:"d.m.Y"
-            }}
+            <strong>Срок возврата:</strong> {{ borrowing.due_date|date:"d.m.Y"}}
           </p>
           {% if borrowing.due_date|date:'Y-m-d' < now|date:'Y-m-d' %}
           <p class="overdue-notice">
@@ -89,7 +86,7 @@
   </div>
   {% endif %}
 
-  <!-- Рекомендуемые книги -->
+  
   {% if recommended_books %}
   <div class="dashboard-section">
     <h2>Рекомендуемые книги</h2>
@@ -141,7 +138,7 @@
   </div>
   {% endif %}
 
-  <!-- Быстрые действия -->
+  
   <div class="dashboard-section">
     <h2>Быстрые действия</h2>
     <div class="quick-actions">

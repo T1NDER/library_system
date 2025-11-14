@@ -1,4 +1,3 @@
-# core/admin.py
 from django.contrib import admin
 from django.urls import path
 from django.shortcuts import render
@@ -6,6 +5,9 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
+from django.contrib.auth import get_user_model
+from borrowings.models import Borrowing
+from django.utils import timezone
 from .models import AuditLog
 
 class LibraryAdminSite(admin.AdminSite):
@@ -94,8 +96,6 @@ class LibraryAdminSite(admin.AdminSite):
         return render(request, 'admin/overdue_list.html', context)
     
     def activity_monitor_view(self, request):
-        from borrowings.models import Borrowing
-        from django.utils import timezone
         
         recent_activities = Borrowing.objects.select_related('book', 'user').order_by('-borrowed_date')[:50]
         
@@ -197,8 +197,6 @@ class LibraryAdminSite(admin.AdminSite):
     
     def active_readers_view(self, request):
         """Активные читатели"""
-        from django.contrib.auth import get_user_model
-        from borrowings.models import Borrowing
         User = get_user_model()
         
         active_readers = User.objects.annotate(

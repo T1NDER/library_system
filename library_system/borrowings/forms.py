@@ -1,5 +1,5 @@
 from django import forms
-from books.models import Book, BorrowRecord  # Импортируем из books
+from books.models import Book
 from .models import Borrowing
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -8,7 +8,7 @@ User = get_user_model()
 
 class BorrowBookForm(forms.ModelForm):
     class Meta:
-        model = Borrowing  # Используем Borrowing из borrowings
+        model = Borrowing  
         fields = ['book', 'user', 'due_date']
         widgets = {
             'due_date': forms.DateInput(attrs={'type': 'date'}),
@@ -23,10 +23,8 @@ class BorrowBookForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Ограничиваем выбор только доступными книгами
         self.fields['book'].queryset = Book.objects.filter(available_copies__gt=0)
 
-        # Добавляем классы для стилизации
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
 
@@ -59,4 +57,3 @@ class ReturnBookForm(forms.Form):
     condition = forms.ChoiceField(choices=condition_choices, label='Состояние книги')
     notes = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False, label='Примечания')
 
-# Удалите старую форму BorrowForm, так как у нас теперь есть BorrowBookForm

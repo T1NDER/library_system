@@ -18,7 +18,6 @@
     </div>
     
     {% if user.role == 'librarian' %}
-        <!-- Дашборд для библиотекаря -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-number">{{ active_borrowings_count|default:"0" }}</div>
@@ -73,7 +72,6 @@
         </div>
 
     {% elif user.role == 'admin' %}
-        <!-- Дашборд для администратора -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-number">{{ total_users|default:"0" }}</div>
@@ -121,7 +119,6 @@
         </div>
 
     {% else %}
-        <!-- Дашборд для читателя -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-number">{{ user_borrowings_count|default:"0" }}</div>
@@ -191,7 +188,7 @@
         </div>
     {% endif %}
 
-    <!-- Общие быстрые ссылки -->
+    
     <div class="dashboard-card">
         <h3>Быстрые ссылки</h3>
         <div class="dashboard-actions">

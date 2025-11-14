@@ -8,4 +8,5 @@ urlpatterns = [
     path('active/', views.active_borrowings, name='active_borrowings'),
     path('borrow-form/', views.borrow_form, name='borrow_form'),
     path('return/<int:borrowing_id>/', views.return_book, name='return_book'),
+    path('manage-requests/', views.manage_requests, name='manage_requests'),
 ]

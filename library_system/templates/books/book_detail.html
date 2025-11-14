@@ -1,7 +1,8 @@
-{% extends 'base.html' %} {% load static %} {% block title %}{{ book.title }}{%
-endblock %} {% block extra_css %}
+{% extends 'base.html' %} {% load static %} {% block title %}{{ book.title }}
+{%endblock %} {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/catalog.css' %}" />
-{% endblock %} {% block content %}
+{% endblock %} 
+{% block content %}
 <div class="container">
   <div class="book-detail">
     <div class="book-header">
@@ -21,17 +22,40 @@ endblock %} {% block extra_css %}
       <p><strong>Автор:</strong> {{ book.author.name }}</p>
       <p><strong>Жанр:</strong> {{ book.genre.name }}</p>
       <p>
-        <strong>Доступно экземпляров:</strong> {{ book.available_copies }} из {{
-        book.total_copies }}
+        <strong>Доступно экземпляров:</strong> {{ book.available_copies }} из {{book.total_copies }}
       </p>
+
       {% if book.publication_year %}
       <p><strong>Год издания:</strong> {{ book.publication_year }}</p>
-      {% endif %} {% if book.publisher %}
+      {% endif %} 
+      {% if book.publisher %}
       <p><strong>Издательство:</strong> {{ book.publisher }}</p>
-      {% endif %} {% if book.isbn %}
+      {% endif %} 
+      {% if book.isbn %}
       <p><strong>ISBN:</strong> {{ book.isbn }}</p>
-      {% endif %}
-    </div>
+      {% endif %} 
+      {% if user.is_authenticated and not user.is_librarian and not user.is_admin %} 
+      {% with user_requests=book.bookrequest_set.all|length %}
+      {% if user_requests > 0 %}
+      <div class="request-status">
+        <p>
+          <strong>Статус заявки:</strong>
+          {% for request in book.bookrequest_set.all %} {% if request.user ==
+          user %} 
+          {% if request.status == 'pending' %}
+          <span class="status pending">Ожидает одобрения</span>
+          {% elif request.status == 'approved' %}
+          <span class="status approved">Одобрена</span>
+          {% elif request.status == 'rejected' %}
+          <span class="status rejected">Отклонена</span>
+              {% endif %}  
+            {% endfor %}
+          </p>
+        </div>
+      {% endif %} 
+    {% endwith %} 
+  {% endif %} 
+</div>
 
     {% if book.description %}
     <div class="book-description">
@@ -46,46 +70,33 @@ endblock %} {% block extra_css %}
       >
 
       {% if user.is_authenticated %} {% if user.is_librarian or user.is_admin %}
-      <!-- ТОЛЬКО для библиотекарей и администраторов -->
       <a
         href="{% url 'borrowings:borrow_form' %}?book={{ book.id }}"
         class="btn btn-primary"
       >
         <i class="fas fa-book"></i> Выдать книгу
       </a>
-      {% elif user_has_book %}
+      <a href="{% url 'books:edit_book' book.id %}" class="btn btn-primary"
+        >Редактировать</a
+      >
+      {% else %} {% if user_has_book %}
       <span class="btn btn-success" style="cursor: not-allowed; opacity: 0.7">
         <i class="fas fa-check"></i> У вас на руках
       </span>
       {% elif book.is_available %}
-      <form
-        method="post"
-        action="{% url 'books:borrow_self' book.id %}"
-        style="display: inline"
-      >
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary">
-          <i class="fas fa-hand-holding"></i> Взять книгу
-        </button>
-      </form>
       {% else %}
       <span class="btn btn-disabled" style="cursor: not-allowed; opacity: 0.7">
         <i class="fas fa-clock"></i> Недоступно
       </span>
-      {% endif %} {% else %}
+      {% endif %} 
+    {% endif %} 
+  {% else %}
       <a
         href="{% url 'login' %}?next={{ request.path }}"
         class="btn btn-primary"
       >
         <i class="fas fa-sign-in-alt"></i> Войти
       </a>
-      {% endif %}
-
-      <!-- Кнопка редактирования ТОЛЬКО для библиотекарей и администраторов -->
-      {% if user.is_librarian or user.is_admin %}
-      <a href="{% url 'books:edit_book' book.id %}" class="btn btn-primary"
-        >Редактировать</a
-      >
       {% endif %}
     </div>
   </div>

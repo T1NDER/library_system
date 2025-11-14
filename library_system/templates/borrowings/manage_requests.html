@@ -1,0 +1,171 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Управление
+заявками{% endblock %} {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/borrowings.css' %}" />
+<style>
+  .request-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background: #fff;
+  }
+  .request-card h4 {
+    margin-top: 0;
+    color: #333;
+  }
+  .request-info {
+    margin-bottom: 10px;
+  }
+  .request-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .status-pending {
+    color: #ffc107;
+  }
+  .status-approved {
+    color: #28a745;
+  }
+  .status-rejected {
+    color: #dc3545;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container">
+  <h1>Управление заявками на книги</h1>
+
+  <div class="tabs">
+    <button class="tab-button active" onclick="showTab('pending')">
+      Ожидающие ({{ pending_requests|length }})
+    </button>
+    <button class="tab-button" onclick="showTab('approved')">Одобренные</button>
+    <button class="tab-button" onclick="showTab('rejected')">
+      Отклоненные
+    </button>
+  </div>
+
+  <div id="pending-tab" class="tab-content active">
+    <h2>Ожидающие заявки</h2>
+    {% if pending_requests %} {% for request in pending_requests %}
+    <div class="request-card">
+      <h4>{{ request.book.title }}</h4>
+      <div class="request-info">
+        <p>
+          <strong>Читатель:</strong> {{ request.user.get_full_name }} ({{
+          request.user.username }})
+        </p>
+        <p>
+          <strong>Дата заявки:</strong> {{ request.requested_date|date:"d.m.Y
+          H:i" }}
+        </p>
+        <p><strong>Автор:</strong> {{ request.book.author.name }}</p>
+        <p><strong>Жанр:</strong> {{ request.book.genre.name }}</p>
+      </div>
+      <div class="request-actions">
+        <form method="post" style="display: inline">
+          {% csrf_token %}
+          <input type="hidden" name="request_id" value="{{ request.id }}" />
+          <input type="hidden" name="action" value="approve" />
+          <label for="notes-approve-{{ request.id }}">Примечания:</label>
+          <input
+            type="text"
+            name="notes"
+            id="notes-approve-{{ request.id }}"
+            placeholder="Необязательно"
+            style="margin-right: 10px"
+          />
+          <button type="submit" class="btn btn-success">Одобрить</button>
+        </form>
+        <form method="post" style="display: inline">
+          {% csrf_token %}
+          <input type="hidden" name="request_id" value="{{ request.id }}" />
+          <input type="hidden" name="action" value="reject" />
+          <label for="notes-reject-{{ request.id }}">Причина отклонения:</label>
+          <input
+            type="text"
+            name="notes"
+            id="notes-reject-{{ request.id }}"
+            placeholder="Укажите причину"
+            required
+            style="margin-right: 10px"
+          />
+          <button type="submit" class="btn btn-danger">Отклонить</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %} {% else %}
+    <p>Нет ожидающих заявок.</p>
+    {% endif %}
+  </div>
+
+  <div id="approved-tab" class="tab-content">
+    <h2>Одобренные заявки</h2>
+    {% if approved_requests %} {% for request in approved_requests %}
+    <div class="request-card">
+      <h4>{{ request.book.title }}</h4>
+      <div class="request-info">
+        <p>
+          <strong>Читатель:</strong> {{ request.user.get_full_name }} ({{
+          request.user.username }})
+        </p>
+        <p>
+          <strong>Дата заявки:</strong> {{ request.requested_date|date:"d.m.Y
+          H:i" }}
+        </p>
+        <p>
+          <strong>Дата одобрения:</strong> {{ request.approved_date|date:"d.m.Y
+          H:i" }}
+        </p>
+        {% if request.notes %}
+        <p><strong>Примечания:</strong> {{ request.notes }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %} {% else %}
+    <p>Нет одобренных заявок.</p>
+    {% endif %}
+  </div>
+
+  <div id="rejected-tab" class="tab-content">
+    <h2>Отклоненные заявки</h2>
+    {% if rejected_requests %} {% for request in rejected_requests %}
+    <div class="request-card">
+      <h4>{{ request.book.title }}</h4>
+      <div class="request-info">
+        <p>
+          <strong>Читатель:</strong> {{ request.user.get_full_name }} ({{
+          request.user.username }})
+        </p>
+        <p>
+          <strong>Дата заявки:</strong> {{ request.requested_date|date:"d.m.Y
+          H:i" }}
+        </p>
+        <p>
+          <strong>Дата отклонения:</strong> {{ request.rejected_date|date:"d.m.Y
+          H:i" }}
+        </p>
+        {% if request.notes %}
+        <p><strong>Причина:</strong> {{ request.notes }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %} {% else %}
+    <p>Нет отклоненных заявок.</p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  function showTab(tabName) {
+    const tabs = document.querySelectorAll(".tab-content");
+    tabs.forEach((tab) => tab.classList.remove("active"));
+    
+    const buttons = document.querySelectorAll(".tab-button");
+    buttons.forEach((button) => button.classList.remove("active"));
+
+    document.getElementById(tabName + "-tab").classList.add("active");
+
+    event.target.classList.add("active");
+  }
+</script>
+{% endblock %}
